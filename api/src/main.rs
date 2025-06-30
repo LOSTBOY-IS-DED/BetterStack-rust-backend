@@ -1,15 +1,32 @@
 // use std::net::TcpListener; -> you can create a http listener on top of this
 
-use poem::{Route, Server, get, handler, listener::TcpListener, post, web::Path};
+use poem::{
+    Route, Server, get, handler,
+    http::response,
+    listener::TcpListener,
+    post,
+    web::{Json, Path},
+};
+
+use crate::{request_inputs::CreateWebsiteInput, request_output::CreateWebsiteOutput};
+
+pub mod request_inputs;
+pub mod request_output;
 
 #[handler]
 fn get_website(Path(website_id): Path<String>) -> String {
     format!("website: {}", website_id)
 }
 
+// getting json input and receiving json input
 #[handler]
-fn create_website(Path(website_id): Path<String>) -> String {
-    format!("website: {}", website_id)
+fn create_website(Json(data): Json<CreateWebsiteInput>) -> Json<CreateWebsiteOutput> {
+    let url = data.url;
+    // persist this is a db
+    let response = CreateWebsiteOutput {
+        id: String::from("ID"),
+    };
+    Json(response)
 }
 
 #[handler]
@@ -22,7 +39,7 @@ async fn main() -> Result<(), std::io::Error> {
     // specify the business details of your app
     let app = Route::new()
         .at("/hello/:name", get(hello))
-        .at("/status/:website_id", get(create_website))
+        .at("/status/:website_id", get(get_website))
         .at("/website", post(create_website));
     // creates and run the http server
     Server::new(TcpListener::bind("0.0.0.0:3000"))
